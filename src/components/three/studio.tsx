@@ -35,7 +35,7 @@ export function Studio({ sirka = 90, polomer = 10, stenaZ = -12, farba = "#f4f3f
 
   return (
     <mesh geometry={geo} receiveShadow>
-      <meshStandardMaterial color={farba} roughness={0.92} metalness={0} side={THREE.DoubleSide} />
+      <meshStandardMaterial color={farba} roughness={0.92} metalness={0} emissive={farba} emissiveIntensity={0.28} side={THREE.DoubleSide} />
     </mesh>
   );
 }

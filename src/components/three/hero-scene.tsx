@@ -4,23 +4,80 @@ import { Suspense, useMemo } from "react";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 import { ContactShadows, Environment, Lightformer, PresentationControls } from "@react-three/drei";
+import * as THREE from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { Bager, type BagerTyp } from "./bager";
 import { ModelBagra, useExistujeModel } from "./model-bagra";
-import { Studio, Ziara } from "./studio";
+import { Studio } from "./studio";
+
+const VELKOST = 2.6; // výška písmen
+const HLBKA = 0.45; // hrúbka písmen
+const ODSTUP = 0.32; // medzera medzi písmenami a stenou (tam svieti LED)
+
+/** Žiara na stene presne podľa tvaru písmen (ako podsvietené reklamné písmená). */
+function Halo({ shapes, sirka, vyska, offX, offY }: { shapes: THREE.Shape[]; sirka: number; vyska: number; offX: number; offY: number }) {
+  const { tex, w, h } = useMemo(() => {
+    const okraj = 1.4; // m okolo písmen
+    const ppm = 120; // pixelov na meter
+    const w = sirka + okraj * 2, h = vyska + okraj * 2;
+    const c = document.createElement("canvas");
+    c.width = Math.round(w * ppm);
+    c.height = Math.round(h * ppm);
+    const x = c.getContext("2d")!;
+    const cesta = new Path2D();
+    const bod = (p: THREE.Vector2) => [(p.x + offX + w / 2) * ppm, (h / 2 - (p.y + offY)) * ppm] as const;
+    const obrys = (pts: THREE.Vector2[]) => {
+      pts.forEach((p, i) => (i ? cesta.lineTo(...bod(p)) : cesta.moveTo(...bod(p))));
+      cesta.closePath();
+    };
+    for (const sh of shapes) {
+      obrys(sh.getPoints(12));
+      sh.holes.forEach((hole) => obrys(hole.getPoints(12)));
+    }
+    // vrstvy: široká mäkká žiara + tesný jasný lem
+    const vrstvy: [number, string][] = [
+      [0.6, "rgba(255,150,60,0.28)"],
+      [0.26, "rgba(255,170,90,0.45)"],
+      [0.1, "rgba(255,205,150,0.75)"],
+      [0.035, "rgba(255,242,220,0.95)"],
+    ];
+    for (const [rozmaz, farba] of vrstvy) {
+      x.filter = `blur(${rozmaz * ppm}px)`;
+      x.fillStyle = farba;
+      x.fill(cesta, "evenodd");
+      x.fill(cesta, "evenodd");
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return { tex: t, w, h };
+  }, [shapes, sirka, vyska, offX, offY]);
+  return (
+    <mesh position={[0, 0, -(HLBKA / 2 + ODSTUP) + 0.01]}>
+      <planeGeometry args={[w, h]} />
+      <meshBasicMaterial map={tex} transparent depthWrite={false} toneMapped={false} />
+    </mesh>
+  );
+}
 
 function Pismo({ text }: { text: string }) {
   const font = useLoader(FontLoader, "/fonts/inter-bold.typeface.json");
-  const geo = useMemo(() => {
-    const g = new TextGeometry(text, { font, size: 2.3, depth: 0.7, curveSegments: 10, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.04, bevelSegments: 5 });
-    g.center();
-    return g;
+  const { geo, shapes, sirka, vyska, offX, offY } = useMemo(() => {
+    const g = new TextGeometry(text, { font, size: VELKOST, depth: HLBKA, curveSegments: 10, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.02, bevelSegments: 4 });
+    g.computeBoundingBox();
+    const b = g.boundingBox!;
+    const offX = -(b.min.x + b.max.x) / 2, offY = -(b.min.y + b.max.y) / 2;
+    g.translate(offX, offY, -(b.min.z + b.max.z) / 2);
+    return { geo: g, shapes: font.generateShapes(text, VELKOST), sirka: b.max.x - b.min.x, vyska: b.max.y - b.min.y, offX, offY };
   }, [font, text]);
   return (
-    <mesh geometry={geo} castShadow receiveShadow>
-      <meshStandardMaterial color="#ffffff" roughness={0.4} metalness={0} emissive="#ffffff" emissiveIntensity={0.62} />
-    </mesh>
+    <group>
+      <Halo shapes={shapes} sirka={sirka} vyska={vyska} offX={offX} offY={offY} />
+      <mesh geometry={geo}>
+        {/* čelo bielej farby, boky trochu tmavšie – vyzerá ako skutočné kovové písmená */}
+        <meshStandardMaterial color="#ffffff" roughness={0.35} metalness={0.05} emissive="#ffffff" emissiveIntensity={0.5} />
+      </mesh>
+    </group>
   );
 }
 
@@ -43,14 +100,9 @@ function Kamera() {
 
 function Napis() {
   const { text } = useUzky();
+  // písmená visia na rovnej zadnej stene štúdia (stena je v z = -12)
   return (
-    <group position={[0, 6.2, -9.6]} scale={[text, text, 1]}>
-      {/* teplé podsvietenie zozadu: žiara na stene + svetlá za písmenami */}
-      <Ziara farba="#ffa24a" sila={0.75} scale={[30, 11, 1]} position={[0, 0.2, -1.4]} />
-      <Ziara farba="#ffc27a" sila={0.6} scale={[18, 5, 1]} position={[0, 0.2, -1.35]} />
-      <pointLight position={[-5, 0.5, -0.8]} color="#ff9d42" intensity={60} distance={12} decay={2} />
-      <pointLight position={[0, 0.5, -0.8]} color="#ffae5c" intensity={60} distance={12} decay={2} />
-      <pointLight position={[5, 0.5, -0.8]} color="#ff9d42" intensity={60} distance={12} decay={2} />
+    <group position={[0, 6.4, -12 + ODSTUP + HLBKA / 2]} scale={[text, text, 1]}>
       <Pismo text="Voščinár" />
     </group>
   );
@@ -89,7 +141,7 @@ export default function HeroScene({ typ }: { typ: BagerTyp }) {
         shadow-bias={-0.0004}
       />
       <Kamera />
-      <Studio />
+      <Studio polomer={4} />
       <Suspense fallback={null}>
         <Napis />
       </Suspense>
