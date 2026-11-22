@@ -7,6 +7,7 @@ import { ContactShadows, Environment, Lightformer, PresentationControls } from "
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
 import { Bager, type BagerTyp } from "./bager";
+import { ModelBagra, useExistujeModel } from "./model-bagra";
 import { Studio, Ziara } from "./studio";
 
 function Pismo({ text }: { text: string }) {
@@ -55,6 +56,20 @@ function Napis() {
   );
 }
 
+// Ak je v public/models/<typ>.glb skutočný model, použije sa; inak sa ukáže jednoduchý bager.
+function BagerNaScene({ typ }: { typ: BagerTyp }) {
+  const url = `/models/${typ}.glb`;
+  const existuje = useExistujeModel(url);
+  if (existuje === null) return null;
+  if (existuje)
+    return (
+      <Suspense fallback={null}>
+        <ModelBagra key={url} url={url} dlzka={typ === "mini" ? 7 : 10} />
+      </Suspense>
+    );
+  return <Bager key={typ} typ={typ} position={[typ === "mini" ? -1.5 : -1.8, 0, 0]} scale={typ === "mini" ? 1.7 : typ === "kolesovy" ? 1.15 : 1} rychlost={0.8} />;
+}
+
 export default function HeroScene({ typ }: { typ: BagerTyp }) {
   return (
     <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 4.6, 19], fov: 36 }} onCreated={({ camera }) => camera.lookAt(0, 3.1, -3)}>
@@ -79,7 +94,7 @@ export default function HeroScene({ typ }: { typ: BagerTyp }) {
         <Napis />
       </Suspense>
       <PresentationControls global snap rotation={[0, Math.PI + 0.55, 0]} polar={[-0.05, 0.15]} azimuth={[-0.8, 0.8]}>
-        <Bager key={typ} typ={typ} position={[typ === "mini" ? -1.5 : -1.8, 0, 0]} scale={typ === "mini" ? 1.7 : typ === "kolesovy" ? 1.15 : 1} rychlost={0.8} />
+        <BagerNaScene typ={typ} />
       </PresentationControls>
       <ContactShadows position={[0, 0.01, 0]} opacity={0.45} scale={22} blur={2.4} far={6} />
       <Environment resolution={256}>
