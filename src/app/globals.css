@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f4f3f1;
+  --ink: #161616;
+  --warm: #ff9a3c;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-warm: var(--warm);
+  --font-sans: var(--font-geist-sans);
+}
+
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--font-sans), system-ui, sans-serif; }
+
+/* kocky s oblými hranami */
+.kocka {
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.2,.8,.2,1), box-shadow .5s;
+  background: linear-gradient(155deg, #ffffff 0%, #f1efec 60%, #e7e4df 100%);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 -10px 24px rgba(0,0,0,.05) inset,
+    0 30px 60px -20px rgba(0,0,0,.25),
+    0 12px 24px -12px rgba(0,0,0,.18);
+}
+.kocka:hover { transform: translateY(-8px) rotateX(6deg) rotateY(-6deg); box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 -10px 24px rgba(0,0,0,.05) inset, 0 45px 80px -25px rgba(0,0,0,.3), 0 18px 30px -14px rgba(255,154,60,.35); }
+
+.leaflet-container { font-family: inherit; }
+
+@keyframes pop { 0% { transform: scale(.6); opacity: 0 } 70% { transform: scale(1.08) } 100% { transform: scale(1); opacity: 1 } }
