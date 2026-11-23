@@ -1,6 +1,6 @@
 # Voščinár – web so službami a 3D konfigurátormi
 
-Samostatný web (Next.js + three.js) – nezávislý od aplikácie Stavebný Jarvis v nadradenom priečinku.
+Samostatný web (Next.js + three.js) – nezávislý od aplikácie Stavebný Jarvis.
 
 - **Úvod:** biele 3D štúdio, v strede bager (na výber pásový / minibáger / kolesový – dá sa potiahnuť a otočiť), vzadu 3D nápis „Voščinár“ podsvietený teplým svetlom.
 - **Nižšie:** tri kocky s oblými hranami – Galéria, Kontakt, Kde pôsobíme (mapa).
@@ -17,17 +17,18 @@ Samostatný web (Next.js + three.js) – nezávislý od aplikácie Stavebný Jar
 | `src/config/cennik.ts` | ceny za m³, jazdy Tatrou, skládka, materiál, minimálna zákazka, DPH |
 | `src/lib/sluzby.ts` | služby, polia formulára a výpočty – nová služba = nový záznam v zozname |
 | `src/app/galeria/page.tsx` | fotky do galérie (súbory do `public/galeria/`) |
+| `public/models/` | 3D modely: `pasovy.glb`, `mini.glb`, `kolesovy.glb` (bagre), `tatra.glb` (sklápač); zmenšenie: `node scripts/optimize-model.mjs vstup.glb vystup.glb` |
+| `src/config/kredity.ts` | autori 3D modelov (licencia CC BY 4.0 – musia byť uvedení) |
 
 ## Spustenie
 
 ```bash
-cd voscinar-web
 npm install
 npm run dev        # http://localhost:3000
 ```
 
 ## Nasadenie na Vercel
 
-Nový projekt na Verceli z tohto repozitára, **Root Directory = `voscinar-web`**, potom pripojiť doménu (napr. voscinar.sk).
+Vercel → Add New → Project → vybrať repozitár **Voscinar-web** → Deploy. Potom pripojiť doménu (napr. voscinar.sk).
 
 `npm run font` znovu vytvorí 3D písmo (`public/fonts/inter-bold.typeface.json`) z Inter Bold – treba len pri zmene písma.

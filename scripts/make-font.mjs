@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import opentype from "opentype.js";
 
-const src = new URL("../../src/lib/pdf/fonts/Inter_700Bold.ttf", import.meta.url);
+const src = new URL("./fonts/Inter_700Bold.ttf", import.meta.url);
 const font = opentype.parse(fs.readFileSync(src).buffer);
 const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽáäčďéíĺľňóôŕšťúýž0123456789 .,-&";
 const scale = (100000) / ((font.unitsPerEm || 2048) * 72);
