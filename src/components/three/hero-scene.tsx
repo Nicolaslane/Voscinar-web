@@ -93,7 +93,7 @@ function Kamera() {
   const { k } = useUzky();
   useEffect(() => {
     camera.position.set(0, 4.6 + (k - 1) * 3, 19 * k);
-    camera.lookAt(0, 3.1 + (k - 1) * 1.5, -3);
+    camera.lookAt(0, 2.5 + (k - 1) * 1.5, -3);
   }, [camera, k]);
   return null;
 }
@@ -102,7 +102,7 @@ function Napis() {
   const { text } = useUzky();
   // písmená visia na rovnej zadnej stene štúdia (stena je v z = -12)
   return (
-    <group position={[0, 6.4, -12 + ODSTUP + HLBKA / 2]} scale={[text, text, 1]}>
+    <group position={[0, 7.4, -12 + ODSTUP + HLBKA / 2]} scale={[text, text, 1]}>
       <Pismo text="Voščinár" />
     </group>
   );
@@ -116,7 +116,7 @@ function BagerNaScene({ typ }: { typ: BagerTyp }) {
   if (existuje)
     return (
       <Suspense fallback={null}>
-        <ModelBagra key={url} url={url} dlzka={typ === "mini" ? 7 : 10} />
+        <ModelBagra key={url} url={url} dlzka={typ === "mini" ? 6.5 : 8.2} rotation-y={1.95} />
       </Suspense>
     );
   return <Bager key={typ} typ={typ} position={[typ === "mini" ? -1.5 : -1.8, 0, 0]} scale={typ === "mini" ? 1.7 : typ === "kolesovy" ? 1.15 : 1} rychlost={0.8} />;

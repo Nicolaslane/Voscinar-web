@@ -8,6 +8,8 @@ import type { OrbitControls as OrbitImpl } from "three-stdlib";
 import type { Scena } from "@/lib/sluzby";
 import { fmt } from "@/lib/sluzby";
 import { Bager } from "./bager";
+import { ModelBagra, useExistujeModel } from "./model-bagra";
+import { Suspense } from "react";
 import { Tatra } from "./tatra";
 
 type P2 = [number, number]; // (x, z)
@@ -178,6 +180,19 @@ function Kamera({ R, ciel }: { R: number; ciel: [number, number, number] }) {
   return null;
 }
 
+// skutočný model (public/models/pasovy.glb), rameno smeruje k výkopu (+X); inak jednoduchý bager
+function BagerScena({ typ, ...props }: { typ: "mini" | "pasovy" } & React.ComponentProps<"group">) {
+  const existuje = useExistujeModel("/models/pasovy.glb");
+  if (existuje === null) return null;
+  if (existuje)
+    return (
+      <Suspense fallback={null}>
+        <ModelBagra url="/models/pasovy.glb" dlzka={typ === "mini" ? 5.5 : 8.2} rotation-y={2.04} {...props} />
+      </Suspense>
+    );
+  return <Bager typ={typ} rychlost={0.9} {...props} />;
+}
+
 export default function KonfiguratorScene({ scena, onJazda }: { scena: Scena; onJazda?: (n: number) => void }) {
   const j = scena.jama;
 
@@ -190,7 +205,7 @@ export default function KonfiguratorScene({ scena, onJazda }: { scena: Scena; on
   const kopaR = scena.kopa ? Math.cbrt(scena.kopa / ((Math.PI * 0.7) / 3)) : 0;
   const tatraZ = -(sirkaZ / 2 + 3.6);
   const kopaPoloha: [number, number, number] = j || scena.plocha ? [0, 0, -(sirkaZ / 2 + kopaR + 1.5)] : [0, 0, 0];
-  const R = Math.max(11, Math.max(sirkaX, sirkaZ) * 1.05 + (scena.tatra ? 6 : 0) + kopaR * 0.8);
+  const R = Math.max(11, Math.max(sirkaX, sirkaZ) * 1.05 + (scena.tatra ? 6 : 0) + kopaR * 0.8 + (scena.bager ? 3 : 0));
   const velkost = Math.max(80, R * 6);
 
   const malyBager = (j?.tvar === "ryha" && j.b < 0.8) || sirkaX * sirkaZ < 20 || (j && j.D < 1);
@@ -210,7 +225,8 @@ export default function KonfiguratorScene({ scena, onJazda }: { scena: Scena; on
   }, [j]);
 
   const cielZ = (j || scena.plocha) && (scena.tatra || kopaR) ? -Math.max(2, kopaR * 0.7) : 0;
-  const ciel = useMemo<[number, number, number]>(() => [0, 0, cielZ], [cielZ]);
+  const cielX = scena.bager ? -2.5 : 0;
+  const ciel = useMemo<[number, number, number]>(() => [cielX, 0, cielZ], [cielX, cielZ]);
 
   return (
     <Canvas shadows dpr={[1, 2]} camera={{ position: [R, R * 0.85, R * 1.2], fov: 40, near: 0.1, far: 500 }}>
@@ -288,9 +304,9 @@ export default function KonfiguratorScene({ scena, onJazda }: { scena: Scena; on
       {scena.kopa ? <Kopa objem={scena.kopa} poloha={kopaPoloha} farba={scena.tatra?.rezim === "dovoz" ? scena.tatra.farbaNakladu : "#7a5232"} /> : null}
 
       {scena.bager && (
-        <Bager
+        <BagerScena
           typ={malyBager ? "mini" : "pasovy"}
-          rychlost={0.9}
+          
           position={j || scena.plocha ? [-sirkaX / 2 - (malyBager ? 2.2 : 4.2), 0, 0] : [kopaPoloha[0] - kopaR - 4.5, 0, kopaPoloha[2]]}
         />
       )}

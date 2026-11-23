@@ -3,6 +3,7 @@ import { Hero } from "@/components/hero";
 import { Menu } from "@/components/menu";
 import { firma } from "@/config/firma";
 import { sluzby } from "@/lib/sluzby";
+import { Kredity } from "@/components/kredity";
 
 const kocky = [
   {
@@ -78,6 +79,7 @@ export default function Home() {
 
       <footer className="border-t border-black/5 py-8 text-center text-sm text-neutral-500">
         © {new Date().getFullYear()} {firma.nazov} · {firma.podtitul}
+        <Kredity className="mt-2" />
       </footer>
     </main>
   );

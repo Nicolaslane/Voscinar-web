@@ -1,9 +1,51 @@
 "use client";
 
-import { useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { useExistujeModel } from "./model-bagra";
+
+/** Diely skutočného modelu nákladiaka, ktoré sa hýbu. */
+type DielyModelu = { korba: THREE.Object3D; kolesa: THREE.Object3D[]; naklad: THREE.Object3D };
+
+/**
+ * Skutočný model sklápača (public/models/tatra.glb, MAN TGA zo Sketchfabu, CC-BY-4.0).
+ * Model ide dopredu v osi +Z, otočíme ho na +X. Korba sa vyklápa okolo zadnej hrany (uzol „platform“).
+ */
+function TatraModel({ farbaNakladu, onReady }: { farbaNakladu: string; onReady: (d: DielyModelu | null) => void }) {
+  const { scene } = useGLTF("/models/tatra.glb");
+  const { obj, diely } = useMemo(() => {
+    const obj = scene.clone(true);
+    obj.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        m.castShadow = true;
+        m.receiveShadow = true;
+      }
+    });
+    const korba = obj.getObjectByName("platform")!;
+    const kolesa = ["wheel_back_axis1_left", "wheel_back_axis1_right", "wheel_back_axis2_left", "wheel_back_axis2_right", "wheel_front_left", "wheel_front_right"]
+      .map((n) => obj.getObjectByName(n))
+      .filter((o): o is THREE.Object3D => Boolean(o));
+    // náklad (kopa zeminy) v korbe – súradnice korby sú v centimetroch
+    const naklad = new THREE.Group();
+    const kopa = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: farbaNakladu, roughness: 1 }));
+    kopa.scale.set(88, 75, 205);
+    kopa.castShadow = true;
+    naklad.add(kopa);
+    naklad.position.set(0, 2, 200);
+    korba.add(naklad);
+    return { obj, diely: { korba, kolesa, naklad } };
+  }, [scene, farbaNakladu]);
+  useEffect(() => {
+    onReady(diely);
+    return () => onReady(null);
+  }, [diely, onReady]);
+  return <primitive object={obj} rotation-y={Math.PI / 2} />;
+}
+
+useGLTF.preload?.("/models/tatra.glb");
 
 const ORANZ = "#e8590c";
 const SIVA = "#5b6168";
@@ -54,9 +96,12 @@ export function Tatra({
   const naklad = useRef<THREE.Group>(null);
   const kolesa = useRef<THREE.Group[]>([]);
   const stav = useRef({ t: 0, jazda: 1, x: rezim === "dovoz" ? 28 : -28 });
+  const model = useRef<DielyModelu | null>(null);
+  const maModel = useExistujeModel("/models/tatra.glb");
+  const nastavModel = useMemo(() => (d: DielyModelu | null) => (model.current = d), []);
 
   useFrame((_, dt) => {
-    if (!auto.current || !korba.current || !naklad.current) return;
+    if (!auto.current) return;
     if (staticky) return;
     const s = stav.current;
     s.t += Math.min(dt, 0.05);
@@ -92,15 +137,31 @@ export function Tatra({
     const dx = x - s.x;
     s.x = x;
     auto.current.position.x = x;
-    korba.current.rotation.z = tilt;
-    naklad.current.scale.set(1, Math.max(0.001, plne), 1);
-    naklad.current.visible = plne > 0.01;
-    for (const k of kolesa.current) k.rotation.z -= dx / 0.62;
+    const m = model.current;
+    if (m) {
+      // model: korba sa dvíha prednou časťou hore (rotácia okolo osi X), kolesá polomer ~0,4 m
+      m.korba.rotation.x = -tilt * 0.75;
+      m.naklad.scale.set(1, Math.max(0.001, plne), 1);
+      m.naklad.visible = plne > 0.01;
+      for (const k of m.kolesa) k.rotation.x += dx / 0.405;
+    } else if (korba.current && naklad.current) {
+      korba.current.rotation.z = tilt;
+      naklad.current.scale.set(1, Math.max(0.001, plne), 1);
+      naklad.current.visible = plne > 0.01;
+      for (const k of kolesa.current) k.rotation.z -= dx / 0.62;
+    }
   });
 
   return (
     <group {...props}>
       <group ref={auto}>
+        {maModel && (
+          <Suspense fallback={null}>
+            <TatraModel farbaNakladu={farbaNakladu} onReady={nastavModel} />
+          </Suspense>
+        )}
+        {maModel === false && (
+        <>
         {/* rám */}
         <mesh position={[0, 1.05, 0]} castShadow>
           <boxGeometry args={[7.6, 0.35, 1.0]} />
@@ -173,6 +234,8 @@ export function Tatra({
         <Koleso x={-1.35} z={-1.0} refs={kolesa} />
         <Koleso x={-2.75} z={1.0} refs={kolesa} />
         <Koleso x={-2.75} z={-1.0} refs={kolesa} />
+        </>
+        )}
       </group>
     </group>
   );

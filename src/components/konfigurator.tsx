@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DPH, cennik } from "@/config/cennik";
 import { firma } from "@/config/firma";
+import { Kredity } from "@/components/kredity";
 import { eur, najdiSluzbu, predvolene, type Hodnoty, type Pole } from "@/lib/sluzby";
 
 const Scena = dynamic(() => import("@/components/three/konfigurator-scene"), {
@@ -194,6 +195,7 @@ export function Konfigurator({ slug }: { slug: string }) {
             alebo zavolaj {firma.telefon}
           </a>
         </div>
+        <Kredity className="mt-6" />
       </div>
     </div>
   );
