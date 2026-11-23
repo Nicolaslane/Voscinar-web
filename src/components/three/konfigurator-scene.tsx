@@ -245,6 +245,7 @@ export default function KonfiguratorScene({ scena, onJazda }: { scena: Scena; on
         shadow-bias={-0.0005}
       />
       <Environment resolution={128}>
+        <color attach="background" args={["#8f8c88"]} />
         <Lightformer form="rect" intensity={2} position={[0, 10, 5]} scale={[12, 4, 1]} rotation-x={Math.PI / 2.5} />
         <Lightformer form="rect" intensity={1} position={[-8, 3, 2]} scale={[4, 6, 1]} rotation-y={Math.PI / 2} />
       </Environment>
