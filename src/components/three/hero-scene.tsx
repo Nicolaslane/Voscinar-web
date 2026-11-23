@@ -150,9 +150,13 @@ export default function HeroScene({ typ }: { typ: BagerTyp }) {
       </PresentationControls>
       <ContactShadows position={[0, 0.01, 0]} opacity={0.45} scale={22} blur={2.4} far={6} />
       <Environment resolution={256}>
-        <Lightformer form="rect" intensity={2.5} position={[0, 8, 6]} scale={[12, 4, 1]} rotation-x={Math.PI / 2.5} />
-        <Lightformer form="rect" intensity={1.5} position={[-8, 3, 2]} scale={[4, 6, 1]} rotation-y={Math.PI / 2} />
-        <Lightformer form="rect" intensity={1.5} position={[8, 3, 2]} scale={[4, 6, 1]} rotation-y={-Math.PI / 2} />
+        {/* svetlé štúdio okolo – odráža sa v čiernom laku ako sivý lesk */}
+        <color attach="background" args={["#8f8c88"]} />
+        {/* štúdiové softboxy – odrážajú sa v laku bagra */}
+        <Lightformer form="rect" intensity={5} position={[0, 9, 4]} scale={[14, 3, 1]} rotation-x={Math.PI / 2.2} />
+        <Lightformer form="rect" intensity={4} position={[-9, 4, 3]} scale={[2, 9, 1]} rotation-y={Math.PI / 2} />
+        <Lightformer form="rect" intensity={4} position={[9, 4, 3]} scale={[2, 9, 1]} rotation-y={-Math.PI / 2} />
+        <Lightformer form="rect" intensity={3} position={[0, 3, 12]} scale={[16, 1.2, 1]} />
         <Lightformer form="ring" color="#ffb366" intensity={2} position={[0, 4, -9]} scale={6} />
       </Environment>
     </Canvas>
